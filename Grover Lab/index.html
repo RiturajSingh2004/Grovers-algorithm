@@ -1,0 +1,181 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Grover Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+/* Layout: an instrument panel. One hero amplitude scope on top, a row of readouts, then four supporting views (rotation plane, probability curve, circuit, measurement). Dark-first. */
+:root{
+  --bg:#090d14; --surface:#0f1520; --surface2:#162033; --line:#243350;
+  --fg:#e6ecf5; --muted:#8b9ab3;
+  --pos:#f0b24a; --neg:#5aa7ff; --target:#ff6b7f; --accent:#3ad1c0;
+  --display:'Space Grotesk',system-ui,sans-serif; --body:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#f2f5fa; --surface:#ffffff; --surface2:#e9eef6; --line:#cdd7e6;
+  --fg:#0f1a2b; --muted:#566580;
+  --pos:#c27a05; --neg:#1d6ad4; --target:#d02c49; --accent:#0a8a7d; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#f2f5fa; --surface:#ffffff; --surface2:#e9eef6; --line:#cdd7e6;
+  --fg:#0f1a2b; --muted:#566580;
+  --pos:#c27a05; --neg:#1d6ad4; --target:#d02c49; --accent:#0a8a7d; color-scheme:light}
+*{box-sizing:border-box}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font:14px/1.55 var(--body);
+  padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  background-image:radial-gradient(1200px 500px at 15% -10%,color-mix(in srgb,var(--accent) 10%,transparent),transparent 60%),radial-gradient(900px 500px at 100% 0%,color-mix(in srgb,var(--target) 8%,transparent),transparent 60%);
+  background-repeat:no-repeat}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.kicker{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+h1{font:700 clamp(28px,5vw,44px)/1.05 var(--display);margin:4px 0 6px;letter-spacing:-.02em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--target)}
+.sub{color:var(--muted);max-width:60ch;margin:0}
+h2{font:600 15px var(--display);margin:0;letter-spacing:.01em}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0;position:relative}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.hint{font:400 11.5px var(--mono);color:var(--muted)}
+button{font:500 13px var(--body);color:var(--fg);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:8px 13px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:active:not(:disabled){transform:translateY(1px)}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,input:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--bg);border-color:var(--accent);font-weight:600}
+button.primary:hover:not(:disabled){filter:brightness(1.08)}
+button.ghost{background:transparent}
+.controls{display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center}
+.group{display:flex;flex-direction:column;gap:6px}
+.label{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.seg{display:flex;gap:4px}
+.seg button{padding:6px 11px;font-family:var(--mono);min-width:34px}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.speed{display:flex;align-items:center;gap:8px;font:12px var(--mono);color:var(--muted)}
+input[type=range]{accent-color:var(--accent);width:110px}
+.check{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.status{display:flex;gap:10px;align-items:center;margin:2px 0 10px;min-height:24px;flex-wrap:wrap}
+.pill{font:500 11px var(--mono);padding:3px 9px;border-radius:99px;border:1px solid var(--line);background:var(--surface2);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap}
+.pill.oracle{color:var(--target);border-color:var(--target)}
+.pill.diffuse{color:var(--accent);border-color:var(--accent)}
+.pill.hadamard{color:var(--neg);border-color:var(--neg)}
+#statusText{color:var(--muted);font-size:13px;min-width:0}
+canvas{display:block;width:100%;touch-action:manipulation}
+#cAmp{height:340px;cursor:pointer}
+#cGeo{height:270px}
+#cProb{height:230px}
+#cHist{height:170px}
+#cCirc{height:200px}
+#tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:12px var(--mono);padding:5px 8px;border-radius:6px;white-space:nowrap;opacity:0;transition:opacity .12s;z-index:5}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.c12{grid-column:span 12}.c7{grid-column:span 7}.c5{grid-column:span 5}.c3{grid-column:span 3}
+.tile{display:flex;flex-direction:column;gap:6px;justify-content:space-between}
+.big{font:600 34px/1 var(--display);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.big small{font:500 14px var(--mono);color:var(--muted);margin-left:2px}
+.meter{height:6px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--target));border-radius:99px;transition:width .2s}
+.vs{display:flex;flex-direction:column;gap:5px;font:12px var(--mono);font-variant-numeric:tabular-nums}
+.vs div{display:flex;align-items:center;gap:8px}
+.vs span.n{width:64px;color:var(--muted)}
+.vs span.b{height:8px;border-radius:4px;display:block}
+.explain{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.explain h3{font:600 13px var(--display);margin:0 0 4px}
+.explain p{margin:0;color:var(--muted);font-size:13px;max-width:60ch}
+.explain code{font:12px var(--mono);color:var(--fg);background:var(--surface2);padding:1px 5px;border-radius:4px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:baseline}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:11.5px var(--mono);color:var(--muted)}
+@media (max-width:900px){.c7,.c5{grid-column:span 12}.c3{grid-column:span 6}.explain{grid-template-columns:1fr}}
+@media (max-width:480px){.c3{grid-column:span 12}#cAmp{height:300px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.guide summary{cursor:pointer;font:600 15px var(--display);list-style:none;display:flex;align-items:center;gap:8px}
+.guide summary::-webkit-details-marker{display:none}
+.guide summary::before{content:"▸";color:var(--accent);transition:transform .15s}
+.guide[open] summary::before{transform:rotate(90deg)}
+.guidegrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin-top:12px}
+.guidegrid h3{font:600 12px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin:0 0 4px}
+.guidegrid p{margin:0;color:var(--muted);font-size:13px}
+.guidegrid b{color:var(--fg);font-weight:600}
+@media (max-width:900px){.guidegrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:480px){.guidegrid{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">Quantum search · amplitude amplification</div>
+      <h1>Grover Lab: find <em>one</em> in N</h1>
+      <p class="sub">An exact state-vector simulation. Click any bar to hide the marked item there, then step through the oracle and the diffusion to watch its amplitude climb.</p>
+    </div>
+    <button id="theme" class="ghost" aria-label="Toggle light and dark theme">Theme</button>
+  </header>
+
+  <details class="card guide" open>
+    <summary>How to read this page</summary>
+    <div class="guidegrid">
+      <div><h3>The idea</h3><p>There are N hidden slots and one is the target. Each bar is one slot, and its height is its amplitude. The chance of finding a slot is its amplitude squared. Grover's job is to make the target bar tall.</p></div>
+      <div><h3>Try this</h3><p>1. Click a bar to choose the target. 2. Press <b>Step</b> and watch the red bar flip down, then jump up. 3. Press Step twice more. 4. Press <b>1000</b> shots in the measurement panel.</p></div>
+      <div><h3>What to watch</h3><p>The dashed teal line is the mean. Diffusion mirrors every bar across it. The rotation plane shows the same thing as an arrow turning toward |t⟩, and the curve shows the odds rising, then falling if you go past the optimum.</p></div>
+      <div><h3>The three steps</h3><p><b>Hadamard</b> gives every slot equal amplitude. <b>Oracle</b> flips the sign of the target. <b>Diffusion</b> reflects all amplitudes about the mean. Repeat oracle and diffusion about (π/4)√N times.</p></div>
+    </div>
+  </details>
+
+  <section class="card" aria-label="Controls">
+    <div class="controls">
+      <div class="group"><span class="label">Qubits n</span><div class="seg" id="qseg" role="group" aria-label="Number of qubits"></div></div>
+      <div class="group"><span class="label">Run</span>
+        <div class="row">
+          <button id="bPlay" class="primary">Play</button>
+          <button id="bStep">Step</button>
+          <button id="bOracle" title="Phase-flip the marked state">Oracle</button>
+          <button id="bDiff" title="Invert about the mean">Diffuse</button>
+          <button id="bReset" class="ghost">Reset</button>
+        </div>
+      </div>
+      <div class="group"><span class="label">Search target</span>
+        <div class="row"><button id="bRand" class="ghost">Random target</button><span class="hint" id="tgtLabel"></span></div>
+      </div>
+      <div class="group"><span class="label">Options</span>
+        <div class="row"><label class="speed" for="speed">Speed <input id="speed" type="range" min="0.5" max="4" step="0.5" value="1"><span id="speedv">1×</span></label>
+        <label class="check" for="over"><input id="over" type="checkbox"> Overshoot past optimum</label></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Amplitude scope">
+    <div class="cardhead"><h2>Amplitudes of all N basis states</h2>
+      <div class="legend"><span><i class="dot" style="background:var(--pos)"></i>positive</span><span><i class="dot" style="background:var(--neg)"></i>negative</span><span><i class="dot" style="background:var(--target)"></i>marked state</span><span><i class="dot" style="background:var(--accent)"></i>mean ⟨a⟩</span></div></div>
+    <div class="status"><span class="pill" id="stagePill">ready</span><span id="statusText"></span></div>
+    <canvas id="cAmp" tabindex="0" role="img" aria-label="Bar chart of the amplitude of every basis state. Click a bar to choose the marked state."></canvas>
+    <div id="tip"></div>
+  </section>
+
+  <section class="grid" aria-label="Readouts">
+    <div class="card tile c3"><span class="label">P(find target)</span><div class="big" id="sP">6.3<small>%</small></div><div class="meter"><i id="sPbar"></i></div></div>
+    <div class="card tile c3"><span class="label">Grover iterations</span><div class="big" id="sK">0<small id="sKopt">/ 3</small></div><span class="hint" id="sKnote">optimal ≈ (π/4)√N</span></div>
+    <div class="card tile c3"><span class="label">Rotation angle</span><div class="big" id="sAng">0°<small id="sAngT"></small></div><span class="hint" id="sAngNote">each iteration adds 2θ</span></div>
+    <div class="card tile c3"><span class="label">Oracle calls to find it</span>
+      <div class="vs"><div><span class="n">classical</span><span class="b" id="bClassic" style="background:var(--muted)"></span><span id="vClassic"></span></div>
+      <div><span class="n">Grover</span><span class="b" id="bGrover" style="background:var(--target)"></span><span id="vGrover"></span></div></div></div>
+  </section>
+
+  <section class="grid">
+    <div class="card c5"><div class="cardhead"><h2>Rotation in the 2-D plane</h2><span class="hint">|t⟩ vs |ω⟩</span></div><canvas id="cGeo" role="img" aria-label="Geometric picture: the state vector rotates toward the target axis"></canvas></div>
+    <div class="card c7"><div class="cardhead"><h2>Success probability vs iterations</h2><span class="hint">sin²((2k+1)θ)</span></div><canvas id="cProb" role="img" aria-label="Success probability curve"></canvas></div>
+    <div class="card c7"><div class="cardhead"><h2>Circuit</h2><span class="hint" id="circNote"></span></div><canvas id="cCirc" role="img" aria-label="Grover circuit diagram"></canvas></div>
+    <div class="card c5"><div class="cardhead"><h2>Measure the register</h2><span class="hint" id="histNote">no shots yet</span></div>
+      <div class="row" style="margin-bottom:8px"><button id="m1">1 shot</button><button id="m100">100</button><button id="m1000">1000</button><button id="mClr" class="ghost">Clear</button></div>
+      <canvas id="cHist" role="img" aria-label="Histogram of measurement outcomes"></canvas></div>
+  </section>
+
+  <section class="card explain" aria-label="How it works">
+    <div><h3>1 · Superposition</h3><p>Hadamard gates put the register in an equal mix of all N = 2ⁿ states, each with amplitude <code>1/√N</code>. The target is hidden among them and nothing yet favors it.</p></div>
+    <div><h3>2 · Oracle</h3><p>The oracle <code>U_f</code> flips the sign of the marked state's amplitude and leaves the rest alone. Probabilities do not change yet, but the mean amplitude drops slightly.</p></div>
+    <div><h3>3 · Diffusion</h3><p>Reflecting every amplitude about the mean, <code>2|s⟩⟨s| − I</code>, turns the small dip of the target into a large gain. After about (π/4)√N rounds the target holds nearly all the probability. Keep going and it rotates past.</p></div>
+  </section>
+</div>
+
+<script src="simulation.js"></script>
+<script src="drawing.js"></script>
+<script src="app.js"></script>
+
+</body></html>
